@@ -82,12 +82,10 @@ PluginComponent {
         id: autoStartTimer
         interval: 2000
         onTriggered: {
-            console.log("AmbientSound autoStart running, pluginData:", JSON.stringify(pluginData));
             var sounds = root.sounds;
             for (var i = 0; i < sounds.length; i++) {
                 var key = "autoStart" + sounds[i].name.charAt(0).toUpperCase() + sounds[i].name.slice(1).replace("-", "");
                 if (pluginData[key]) {
-                    console.log("Auto-starting:", sounds[i].name);
                     root.toggleSound(sounds[i].name);
                 }
             }
@@ -95,7 +93,6 @@ PluginComponent {
     }
 
     Component.onCompleted: {
-        console.log("AmbientSound loaded");
         autoStartTimer.start();
     }
 
