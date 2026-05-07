@@ -89,12 +89,22 @@ PluginComponent {
                     root.toggleSound(sounds[i].name);
                 }
             }
+            if (pluginData.enableSleepTimer) {
+                var minutes = parseInt(pluginData.sleepTimerDuration) || 30;
+                sleepTimer.interval = minutes * 60 * 1000;
+                sleepTimer.start();
+            }
         }
     }
 
-    Component.onCompleted: {
-        autoStartTimer.start();
+    Timer {
+        id: sleepTimer
+        onTriggered: {
+            root.stopAll();
+        }
     }
+
+    Component.onCompleted: autoStartTimer.start()
 
     // --- UI Components ---
 
