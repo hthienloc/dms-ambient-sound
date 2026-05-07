@@ -66,17 +66,7 @@ PluginComponent {
     property int masterVolume: parseInt(pluginData.defaultVolume) || 75
 
     Component.onCompleted: {
-        console.log("Auto-start check:", pluginData.autoStartRain, typeof pluginData.autoStartRain);
-        if (pluginData.autoStartRain === true || pluginData.autoStartRain === "true") root.toggleSound("rain");
-        if (pluginData.autoStartFireplace === true || pluginData.autoStartFireplace === "true") root.toggleSound("fireplace");
-        if (pluginData.autoStartWaves === true || pluginData.autoStartWaves === "true") root.toggleSound("waves");
-        if (pluginData.autoStartWind === true || pluginData.autoStartWind === "true") root.toggleSound("wind");
-        if (pluginData.autoStartStorm === true || pluginData.autoStartStorm === "true") root.toggleSound("storm");
-        if (pluginData.autoStartBirds === true || pluginData.autoStartBirds === "true") root.toggleSound("birds");
-        if (pluginData.autoStartCity === true || pluginData.autoStartCity === "true") root.toggleSound("city");
-        if (pluginData.autoStartCoffeeShop === true || pluginData.autoStartCoffeeShop === "true") root.toggleSound("coffee-shop");
-        if (pluginData.autoStartStream === true || pluginData.autoStartStream === "true") root.toggleSound("stream");
-        if (pluginData.autoStartSummerNight === true || pluginData.autoStartSummerNight === "true") root.toggleSound("summer-night");
+        console.log("AmbientSound: checking auto-start, pluginData:", JSON.stringify(pluginData));
     }
 
     readonly property var sounds: [
