@@ -19,12 +19,12 @@ PluginSettings {
 
     StyledRect {
         width: parent.width
-        height: volumeColumn.implicitHeight + Theme.spacingL * 2
+        height: audioColumn.implicitHeight + Theme.spacingL * 2
         radius: Theme.cornerRadius
         color: Theme.surfaceContainerHigh
 
         Column {
-            id: volumeColumn
+            id: audioColumn
             anchors.fill: parent
             anchors.margins: Theme.spacingL
             spacing: Theme.spacingM
@@ -53,18 +53,18 @@ PluginSettings {
 
     StyledRect {
         width: parent.width
-        height: soundsColumn.implicitHeight + Theme.spacingL * 2
+        height: filesColumn.implicitHeight + Theme.spacingL * 2
         radius: Theme.cornerRadius
         color: Theme.surfaceContainerHigh
 
         Column {
-            id: soundsColumn
+            id: filesColumn
             anchors.fill: parent
             anchors.margins: Theme.spacingL
             spacing: Theme.spacingM
 
             StyledText {
-                text: "Required Files"
+                text: "Sound Files"
                 font.pixelSize: Theme.fontSizeMedium
                 font.weight: Font.Medium
                 color: Theme.surfaceText
@@ -72,10 +72,17 @@ PluginSettings {
 
             StyledText {
                 width: parent.width
-                text: "This plugin requires sound files (.ogg) in the sounds/ folder.\n\nDownload from: github.com/rafaelmardojai/blanket"
+                text: "Required: rain, fireplace, waves, wind, storm, birds, city, coffee-shop, stream, summer-night (.ogg files in sounds/ folder)"
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceVariantText
                 wrapMode: Text.WordWrap
+            }
+
+            StyledText {
+                width: parent.width
+                text: "Download from: github.com/rafaelmardojai/blanket"
+                font.pixelSize: Theme.fontSizeSmall
+                color: Theme.link
             }
         }
     }
