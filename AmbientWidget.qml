@@ -134,7 +134,7 @@ Timer {
                 DankIcon {
                     name: root.playingSounds.length > 0 ? "" : "music_note"
                     size: Theme.iconSizeSmall
-                    color: root.playingSounds.length > 0 || sleepTimer.running ? Theme.onPrimaryContainer : Theme.surfaceVariantText
+                    color: root.playingSounds.length > 0 || sleepTimer.running ? Theme.onPrimary : Theme.surfaceVariantText
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !sleepTimer.running
                 }
@@ -146,7 +146,7 @@ Timer {
                         model: 3
                         Rectangle {
                             width: 2; height: 4; radius: 1
-                            color: Theme.onPrimaryContainer
+                            color: Theme.onPrimary
                             anchors.verticalCenter: parent.verticalCenter
                             Timer {
                                 running: root.playingSounds.length > 0; repeat: true; interval: 150 + (index * 50)
@@ -159,7 +159,7 @@ Timer {
                 StyledText {
                     text: sleepTimer.running ? formatRemainingTime(sleepTimer.remainingTime) : ""
                     font.pixelSize: Theme.fontSizeMedium
-                    color: root.playingSounds.length > 0 || sleepTimer.running ? Theme.onPrimaryContainer : Theme.surfaceVariantText
+                    color: Theme.onPrimary
                     anchors.verticalCenter: parent.verticalCenter
                     visible: sleepTimer.running
                 }
