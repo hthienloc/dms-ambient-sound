@@ -236,8 +236,8 @@ PluginComponent {
                     volume: 75
                 }
             ];
-            pluginService.savePluginData(root.pluginId, "presets", defaultPresets);
-            pluginService.savePluginData(root.pluginId, "hasInitializedPresets", true);
+            pluginService?.savePluginData(root.pluginId, "presets", defaultPresets);
+            pluginService?.savePluginData(root.pluginId, "hasInitializedPresets", true);
         }
     }
 
