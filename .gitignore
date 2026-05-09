@@ -2,3 +2,4 @@ sounds/*.ogg
 sounds/*.png
 sounds/screenshot.png
 .DS_Store
+sounds/
