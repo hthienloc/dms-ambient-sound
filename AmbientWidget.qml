@@ -711,7 +711,7 @@ PluginComponent {
                         width: parent.width - 32
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignHCenter
-                        visible: root.playingSounds.length > 0
+                        visible: root.playingSounds.length > 0 && (pluginData.showReminderText ?? true)
                     }
                 }
             }
