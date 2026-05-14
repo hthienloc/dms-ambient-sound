@@ -26,7 +26,6 @@ PluginSettings {
         { name: "pink-noise", icon: "blur_linear" }
     ]
 
-    // State management for auto-start toggles
     property var autoStartStates: ({})
 
     function autoStartKey(soundName) {

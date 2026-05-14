@@ -415,7 +415,7 @@ PluginComponent {
                         }
                         MouseArea {
                             anchors.fill: parent
-                            acceptedButtons: Qt.NoButton // Để click vẫn xuyên qua được Slider
+                            acceptedButtons: Qt.NoButton
                             onWheel: (wheel) => {
                                 var delta = wheel.angleDelta.y > 0 ? 5 : -5;
                                 var newVol = Math.min(100, Math.max(0, root.masterVolume + delta));
