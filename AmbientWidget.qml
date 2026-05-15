@@ -17,10 +17,10 @@ PluginComponent {
 
     // Layout constants
     readonly property real cellWidth: (root.popoutWidth - (root.gridSpacing * 2) - 16) / 3
-    readonly property real cellHeight: 95
-    readonly property real iconSize: 28
-    readonly property real fontSize: 14
-    readonly property int gridSpacing: 8
+    readonly property real cellHeight: 80
+    readonly property real iconSize: 24
+    readonly property real fontSize: 13
+    readonly property int gridSpacing: 6
 
     // Plugin directory (for sound files)
     readonly property string pluginDir: {
@@ -375,8 +375,8 @@ PluginComponent {
     verticalBarPill: horizontalBarPill
 
     // Popout dimensions
-    popoutWidth: 440
-    popoutHeight: root.presets.length > 0 ? 620 : 540
+    popoutWidth: 350
+    popoutHeight: root.presets.length > 0 ? 540 : 460
 
     // Popout content
     popoutContent: Component {
@@ -499,6 +499,7 @@ PluginComponent {
                             height: root.cellHeight
                             iconName: modelData.icon
                             title: modelData.name.replace("-", " ")
+                            titleFontSize: 12
                             subtitle: {
                                 var vol = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
                                 return vol < 100 ? vol + "%" : ""
@@ -598,7 +599,7 @@ PluginComponent {
                             Repeater {
                                 model: root.whenDoneOptions
                                 delegate: Rectangle {
-                                    width: 92; height: 40
+                                    width: 78; height: 36
                                     radius: Theme.cornerRadius
                                     color: root.isWhenDoneSelected(modelData.value) ? Theme.primary : Theme.surfaceContainerHigh
                                     border.width: root.isWhenDoneSelected(modelData.value) ? 0 : 1
