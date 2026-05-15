@@ -6,7 +6,14 @@ Play ambient sounds for focus and relaxation.
 
 ## Install
 
-```
+
+**Required:** This plugin requires [dms-common](https://github.com/hthienloc/dms-common) to be installed.
+
+```bash
+# 1. Install shared components
+git clone https://github.com/hthienloc/dms-common ~/.config/DankMaterialShell/plugins/dms-common
+
+# 2. Install this plugin
 dms://plugin/install/ambientSound
 ```
 
@@ -36,6 +43,4 @@ git clone https://github.com/hthienloc/dms-ambient-sound ~/.config/DankMaterialS
 
 ## License
 
-GPL-3.0
-## Dependencies
-- Requires [dms-common](https://github.com/hthienloc/dms-common) to be installed in the plugins directory.
+GPL-3.0(https://github.com/hthienloc/dms-common) to be installed in the plugins directory.
