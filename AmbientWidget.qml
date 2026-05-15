@@ -396,7 +396,7 @@ PluginComponent {
                     isMuted: root.isMuted
                     showStopButton: true
                     stopButtonEnabled: root.playingSounds.length > 0
-                    onVolumeChanged: v => {
+                    onVolumeChangeRequested: v => {
                         root.masterVolume = v * 100;
                         if (v > 0 && root.isMuted) root.isMuted = false;
                         root.updateAllVolumes();
