@@ -522,13 +522,13 @@ PluginComponent {
                     }
 
                     // 15th Slot: Save Preset Button
-                    OutlineButton {
+                    ActionTile {
                         width: root.cellWidth
                         height: root.cellHeight
-                        text: "Save Preset"
                         iconName: "bookmark_add"
+                        title: "Save Preset"
                         borderColor: Theme.primary
-                        textColor: Theme.primary
+                        borderWidth: 1
                         onClicked: root.savePreset()
                     }
                 }
