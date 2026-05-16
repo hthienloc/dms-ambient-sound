@@ -14,7 +14,7 @@ Play ambient sounds for focus and relaxation.
 git clone https://github.com/hthienloc/dms-common ~/.config/DankMaterialShell/plugins/dms-common
 
 # 2. Install this plugin
-dms://plugin/install/ambientSound
+dms plugins install ambientSound
 ```
 
 Or manually:
