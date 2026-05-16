@@ -47,6 +47,9 @@ GPL-3.0
 
 ## Roadmap / TODO
 
-- [ ] Support for **custom user sound files** via a configurable folder.
-- [ ] **Scheduled auto-play** (e.g., start a focus preset at a specific time).
-- [ ] Add more **built-in soundscapes** (e.g., Library, Dense Forest, Underground).
+- [ ] **MPRIS Integration**: Control playback and volume from system media controllers.
+- [ ] **Cross-fade Transitions**: Smoothly fade sounds in and out when switching presets or stopping.
+- [ ] **Custom Sound Support**: Ability to add personal `.ogg` or `.mp3` files to a user-defined folder.
+- [ ] **Environmental Effects**: Basic filters (e.g., "Muffled/Behind Wall" effect) using mpv's audio filters.
+- [ ] **Advanced Scheduling**: Set timers or calendar-based triggers to auto-start specific soundscapes.
+- [ ] **Dynamic Soundscapes**: Sounds that vary slightly over time to prevent "loop fatigue."
