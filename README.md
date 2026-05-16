@@ -44,3 +44,9 @@ git clone https://github.com/hthienloc/dms-ambient-sound ~/.config/DankMaterialS
 ## License
 
 GPL-3.0
+
+## Roadmap / TODO
+
+- [ ] Support for **custom user sound files** via a configurable folder.
+- [ ] **Scheduled auto-play** (e.g., start a focus preset at a specific time).
+- [ ] Add more **built-in soundscapes** (e.g., Library, Dense Forest, Underground).
