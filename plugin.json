@@ -2,7 +2,7 @@
   "id": "ambientSound",
   "name": "Ambient Sound",
   "description": "Play ambient sounds for focus",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "GPL-3.0",
   "author": "Loc Huynh",
   "icon": "music_note",
