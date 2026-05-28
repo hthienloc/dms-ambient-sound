@@ -147,6 +147,6 @@ PluginSettings {
     }
 
     FeedbackCard {
-        repoUrl: "https://github.com/hthienloc/dms-ambientSound"
+        repoUrl: "https://github.com/hthienloc/dms-ambient-sound"
     }
 }
