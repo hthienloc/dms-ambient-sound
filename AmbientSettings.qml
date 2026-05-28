@@ -4,7 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
-import "../dms-common"
+import "./dms-common"
 
 PluginSettings {
     id: root
@@ -45,12 +45,8 @@ PluginSettings {
     Component.onCompleted: updateAutoStartStates()
     onSettingChanged: updateAutoStartStates()
 
-    PluginHeader {
-        title: "Ambient Sound Settings"
-    }
-
     SettingsCard {
-        SectionTitle { text: "Audio" }
+        SectionTitle { text: "Audio"; icon: "volume_up" }
 
         SliderSetting {
             settingKey: "defaultVolume"
@@ -64,7 +60,7 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Sleep Timer" }
+        SectionTitle { text: "Sleep Timer"; icon: "timer" }
 
         ToggleSetting {
             settingKey: "enableSleepTimer"
@@ -91,7 +87,7 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Auto-start Sounds" }
+        SectionTitle { text: "Auto-start Sounds"; icon: "play_circle_outline" }
         InfoText { text: "Select sounds to play automatically when you log in." }
 
         Flow {
@@ -140,7 +136,7 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Behavior" }
+        SectionTitle { text: "Behavior"; icon: "settings" }
 
         ToggleSetting {
             settingKey: "showHints"
@@ -148,5 +144,9 @@ PluginSettings {
             description: "Display helpful usage tips and shortcuts at the bottom of the popout."
             defaultValue: true
         }
+    }
+
+    FeedbackCard {
+        repoUrl: "https://github.com/hthienloc/dms-ambientSound"
     }
 }
