@@ -417,7 +417,7 @@ PluginComponent {
                     visible: root.presets.length > 0
 
                     StyledText {
-                        text: "Your Presets"
+                        text: I18n.tr("Your Presets")
                         font.pixelSize: Theme.fontSizeSmall
                         font.weight: Font.Bold
                         color: Theme.surfaceVariantText
@@ -571,7 +571,7 @@ PluginComponent {
                         visible: sleepTimer.running
 
                         StyledText {
-                            text: "Sleep timer: " + Math.ceil(sleepTimer.remainingTime / 60000) + " minutes left"
+                            text: I18n.tr("Sleep timer: ") + Math.ceil(sleepTimer.remainingTime / 60000) + I18n.tr(" minutes left")
                             font.pixelSize: Theme.fontSizeSmall
                             color: Theme.primary
                             anchors.verticalCenter: parent.verticalCenter
@@ -579,7 +579,7 @@ PluginComponent {
                         }
 
                         DankButton {
-                            text: "Cancel"
+                            text: I18n.tr("Cancel")
                             width: 80; height: 32
                             backgroundColor: Theme.surfaceContainerHighest
                             textColor: Theme.surfaceText
@@ -592,7 +592,7 @@ PluginComponent {
                         spacing: 4
 
                         StyledText {
-                            text: "When Done:"
+                            text: I18n.tr("When Done:")
                             font.pixelSize: Theme.fontSizeSmall
                             font.weight: Font.Bold
                             color: Theme.surfaceVariantText
@@ -638,11 +638,11 @@ PluginComponent {
 
                         HintItem {
                             icon: "mouse"
-                            text: "Right-click bar icon to quickly mute/unmute."
+                            text: I18n.tr("Right-click bar icon to quickly mute/unmute.")
                         }
                         HintItem {
                             icon: "mouse"
-                            text: "Scroll on a sound tile to adjust its individual volume."
+                            text: I18n.tr("Scroll on a sound tile to adjust its individual volume.")
                         }
                     }
                 }

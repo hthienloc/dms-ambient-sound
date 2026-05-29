@@ -46,12 +46,12 @@ PluginSettings {
     onSettingChanged: updateAutoStartStates()
 
     SettingsCard {
-        SectionTitle { text: "Audio"; icon: "volume_up" }
+        SectionTitle { text: I18n.tr("Audio"); icon: "volume_up" }
 
         SliderSetting {
             settingKey: "defaultVolume"
-            label: "Default Volume"
-            description: "Initial volume when starting."
+            label: I18n.tr("Default Volume")
+            description: I18n.tr("Initial volume when starting.")
             minimum: 0
             maximum: 100
             unit: "%"
@@ -60,26 +60,26 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Sleep Timer"; icon: "timer" }
+        SectionTitle { text: I18n.tr("Sleep Timer"); icon: "timer" }
 
         ToggleSetting {
             settingKey: "enableSleepTimer"
-            label: "Enable Sleep Timer"
-            description: "Stop audio automatically after set duration."
+            label: I18n.tr("Enable Sleep Timer")
+            description: I18n.tr("Stop audio automatically after set duration.")
             defaultValue: true
         }
 
         SelectionSetting {
             settingKey: "defaultTimer"
-            label: "Default Duration"
-            description: "Default countdown when timer is enabled."
+            label: I18n.tr("Default Duration")
+            description: I18n.tr("Default countdown when timer is enabled.")
             options: [
-                { label: "15 minutes", value: "15" },
-                { label: "30 minutes", value: "30" },
-                { label: "45 minutes", value: "45" },
-                { label: "1 hour", value: "60" },
-                { label: "1.5 hours", value: "90" },
-                { label: "2 hours", value: "120" }
+                { label: I18n.tr("15 minutes"), value: "15" },
+                { label: I18n.tr("30 minutes"), value: "30" },
+                { label: I18n.tr("45 minutes"), value: "45" },
+                { label: I18n.tr("1 hour"), value: "60" },
+                { label: I18n.tr("1.5 hours"), value: "90" },
+                { label: I18n.tr("2 hours"), value: "120" }
             ]
             defaultValue: "30"
             visible: pluginData.enableSleepTimer ?? true
@@ -87,8 +87,8 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Auto-start Sounds"; icon: "play_circle_outline" }
-        InfoText { text: "Select sounds to play automatically when you log in." }
+        SectionTitle { text: I18n.tr("Auto-start Sounds"); icon: "play_circle_outline" }
+        InfoText { text: I18n.tr("Select sounds to play automatically when you log in.") }
 
         Flow {
             id: autoStartFlow
@@ -116,7 +116,7 @@ PluginSettings {
                             color: isChecked ? Theme.onPrimary : Theme.surfaceVariantText
                         }
                         StyledText {
-                            text: modelData.name.replace("-", " ")
+                            text: I18n.tr(modelData.name.replace("-", " "))
                             font.pixelSize: Theme.fontSizeSmall
                             font.weight: isChecked ? Font.Bold : Font.Normal
                             color: isChecked ? Theme.onPrimary : Theme.surfaceText
@@ -136,17 +136,17 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: "Behavior"; icon: "settings" }
+        SectionTitle { text: I18n.tr("Behavior"); icon: "settings" }
 
         ToggleSetting {
             settingKey: "showHints"
-            label: "Show Hints"
-            description: "Display helpful usage tips and shortcuts at the bottom of the popout."
+            label: I18n.tr("Show Hints")
+            description: I18n.tr("Display helpful usage tips and shortcuts at the bottom of the popout.")
             defaultValue: true
         }
     }
 
-    FeedbackCard {
+    PluginAbout {
         repoUrl: "https://github.com/hthienloc/dms-ambient-sound"
     }
 }
