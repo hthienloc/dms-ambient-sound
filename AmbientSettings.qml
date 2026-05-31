@@ -46,9 +46,16 @@ PluginSettings {
     onSettingChanged: updateAutoStartStates()
 
     SettingsCard {
-        SectionTitle { text: I18n.tr("Audio"); icon: "volume_up" }
+        id: audioSection
+        SectionTitle { 
+            text: I18n.tr("Audio")
+            icon: "volume_up" 
+            showReset: defaultVolume.isDirty
+            onResetClicked: defaultVolume.resetToDefault()
+        }
 
-        SliderSetting {
+        SliderSettingPlus {
+            id: defaultVolume
             settingKey: "defaultVolume"
             label: I18n.tr("Default Volume")
             description: I18n.tr("Initial volume when starting.")
@@ -56,23 +63,37 @@ PluginSettings {
             maximum: 100
             unit: "%"
             defaultValue: 75
+            leftLabel: "0%"
+            rightLabel: "100%"
         }
     }
 
     SettingsCard {
-        SectionTitle { text: I18n.tr("Sleep Timer"); icon: "timer" }
+        id: timerSection
+        SectionTitle { 
+            text: I18n.tr("Sleep Timer")
+            icon: "timer" 
+            showReset: enableSleepTimer.isDirty || defaultTimer.isDirty
+            onResetClicked: {
+                enableSleepTimer.resetToDefault();
+                defaultTimer.resetToDefault();
+            }
+        }
 
-        ToggleSetting {
+        ToggleSettingPlus {
+            id: enableSleepTimer
             settingKey: "enableSleepTimer"
             label: I18n.tr("Enable Sleep Timer")
             description: I18n.tr("Stop audio automatically after set duration.")
             defaultValue: true
         }
 
-        SelectionSetting {
+        Separator { visible: enableSleepTimer.value }
+
+        SelectionSettingPlus {
+            id: defaultTimer
             settingKey: "defaultTimer"
             label: I18n.tr("Default Duration")
-            description: I18n.tr("Default countdown when timer is enabled.")
             options: [
                 { label: I18n.tr("15 minutes"), value: "15" },
                 { label: I18n.tr("30 minutes"), value: "30" },
@@ -82,7 +103,7 @@ PluginSettings {
                 { label: I18n.tr("2 hours"), value: "120" }
             ]
             defaultValue: "30"
-            visible: pluginData.enableSleepTimer ?? true
+            visible: enableSleepTimer.value
         }
     }
 
@@ -93,13 +114,13 @@ PluginSettings {
         Flow {
             id: autoStartFlow
             width: parent.width
-            spacing: 8
+            spacing: 6
 
             Repeater {
                 model: root.sounds
                 delegate: Rectangle {
-                    width: (autoStartFlow.width - 16) / 3
-                    height: 44
+                    width: (autoStartFlow.width - 12) / 3
+                    height: 36
                     radius: Theme.cornerRadius
                     
                     readonly property string sKey: root.autoStartKey(modelData.name)
@@ -112,7 +133,7 @@ PluginSettings {
                         spacing: 6
                         DankIcon {
                             name: modelData.icon
-                            size: 18
+                            size: 16
                             color: isChecked ? Theme.onPrimary : Theme.surfaceVariantText
                         }
                         StyledText {
@@ -136,13 +157,39 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: I18n.tr("Behavior"); icon: "settings" }
+        id: behaviorSection
+        SectionTitle { 
+            text: I18n.tr("Behavior")
+            icon: "settings" 
+            showReset: showHints.isDirty
+            onResetClicked: showHints.resetToDefault()
+        }
 
-        ToggleSetting {
+        ToggleSettingPlus {
+            id: showHints
             settingKey: "showHints"
             label: I18n.tr("Show Hints")
-            description: I18n.tr("Display helpful usage tips and shortcuts at the bottom of the popout.")
             defaultValue: true
+        }
+    }
+
+    SettingsCard {
+        SectionTitle { 
+            id: usageTitle
+            text: I18n.tr("Usage Guide")
+            icon: "menu_book" 
+            collapsible: true
+            settingKey: "usageGuideExpanded"
+        }
+
+        UsageGuide {
+            expanded: usageTitle.isExpanded
+            items: [
+                I18n.tr("<b>Left-click</b> the pill to open the sound selector."),
+                I18n.tr("<b>Right-click</b> the pill to stop all sounds instantly."),
+                I18n.tr("You can play <b>multiple sounds</b> simultaneously to create your own atmosphere."),
+                I18n.tr("Set the <b>Sleep Timer</b> in the popout to turn off sounds after a delay.")
+            ]
         }
     }
 
