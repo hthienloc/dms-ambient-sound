@@ -28,6 +28,7 @@ PluginSettings {
     ]
 
     property var autoStartStates: ({})
+    property var presetOptions: [{ label: I18n.tr("None"), value: "" }]
 
     function autoStartKey(soundName) {
         return "autoStart" + soundName.charAt(0).toUpperCase() + soundName.slice(1).replace("-", "");
@@ -42,8 +43,27 @@ PluginSettings {
         autoStartStates = states;
     }
 
-    Component.onCompleted: updateAutoStartStates()
-    onSettingChanged: updateAutoStartStates()
+    function updatePresetsList() {
+        let opts = [{ label: I18n.tr("None"), value: "" }];
+        let saved = root.loadValue("presets", []);
+        for (let i = 0; i < saved.length; i++) {
+            opts.push({ label: saved[i].name, value: saved[i].name });
+        }
+        presetOptions = opts;
+    }
+
+    Component.onCompleted: {
+        updateAutoStartStates();
+        updatePresetsList();
+    }
+    onSettingChanged: {
+        updateAutoStartStates();
+        updatePresetsList();
+    }
+    onPluginServiceChanged: {
+        updateAutoStartStates();
+        updatePresetsList();
+    }
 
     SettingsCard {
         id: audioSection
@@ -161,9 +181,23 @@ PluginSettings {
         SectionTitle { 
             text: I18n.tr("Behavior")
             icon: "settings" 
-            showReset: showHints.isDirty
-            onResetClicked: showHints.resetToDefault()
+            showReset: showHints.isDirty || middleClickAction.isDirty
+            onResetClicked: {
+                showHints.resetToDefault();
+                middleClickAction.resetToDefault();
+            }
         }
+
+        SelectionSettingPlus {
+            id: middleClickAction
+            settingKey: "middleClickAction"
+            label: I18n.tr("Middle-click Preset")
+            description: I18n.tr("Sound preset to play/toggle when middle-clicking the bar icon.")
+            options: root.presetOptions
+            defaultValue: ""
+        }
+
+        Separator {}
 
         ToggleSettingPlus {
             id: showHints
@@ -186,6 +220,7 @@ PluginSettings {
             expanded: usageTitle.isExpanded
             items: [
                 I18n.tr("<b>Left-click</b> the pill to open the sound selector."),
+                I18n.tr("<b>Middle-click</b> the pill to toggle your chosen sound preset."),
                 I18n.tr("<b>Right-click</b> the pill to stop all sounds instantly."),
                 I18n.tr("You can play <b>multiple sounds</b> simultaneously to create your own atmosphere."),
                 I18n.tr("Set the <b>Sleep Timer</b> in the popout to turn off sounds after a delay.")

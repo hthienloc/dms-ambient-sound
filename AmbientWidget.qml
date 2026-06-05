@@ -150,6 +150,35 @@ PluginComponent {
         });
     }
 
+    function togglePresetByName(presetName) {
+        var foundPreset = null;
+        for (var i = 0; i < presets.length; i++) {
+            if (presets[i].name === presetName) {
+                foundPreset = presets[i];
+                break;
+            }
+        }
+        if (!foundPreset) return;
+
+        var active = true;
+        if (root.playingSounds.length !== foundPreset.sounds.length) {
+            active = false;
+        } else {
+            for (var j = 0; j < foundPreset.sounds.length; j++) {
+                if (root.playingSounds.indexOf(foundPreset.sounds[j]) < 0) {
+                    active = false;
+                    break;
+                }
+            }
+        }
+
+        if (active) {
+            root.stopAll();
+        } else {
+            root.loadPreset(foundPreset);
+        }
+    }
+
     function deletePreset(index) {
         var newPresets = presets.slice();
         newPresets.splice(index, 1);
@@ -307,8 +336,10 @@ PluginComponent {
                     volume: 75
                 }
             ];
-            pluginService?.savePluginData(root.pluginId, "presets", defaultPresets);
-            pluginService?.savePluginData(root.pluginId, "hasInitializedPresets", true);
+            if (pluginService) {
+                pluginService.savePluginData(root.pluginId, "presets", defaultPresets);
+                pluginService.savePluginData(root.pluginId, "hasInitializedPresets", true);
+            }
         }
     }
 
@@ -318,12 +349,21 @@ PluginComponent {
             implicitWidth: pillRow.implicitWidth
             implicitHeight: pillRow.implicitHeight
 
-            // Mouse area for left click and wheel
+            // Mouse area for left click, middle click, and wheel
             MouseArea {
                 anchors.fill: parent
-                acceptedButtons: Qt.LeftButton
+                acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.triggerPopout()
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.MiddleButton) {
+                        var preset = pluginData.middleClickAction || "";
+                        if (preset !== "") {
+                            root.togglePresetByName(preset);
+                        }
+                    } else {
+                        root.triggerPopout();
+                    }
+                }
                 onWheel: (wheel) => {
                     var delta = wheel.angleDelta.y > 0 ? 10 : -10;
                     root.adjustVolume(delta);
@@ -636,6 +676,10 @@ PluginComponent {
                         width: parent.width
                         showHints: root.showHints && root.playingSounds.length > 0
 
+                        HintItem {
+                            icon: "mouse"
+                            text: I18n.tr("Middle-click bar icon to toggle your preset sound.")
+                        }
                         HintItem {
                             icon: "mouse"
                             text: I18n.tr("Right-click bar icon to quickly mute/unmute.")
