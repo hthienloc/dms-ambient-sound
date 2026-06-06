@@ -4,11 +4,21 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Plugins
+import qs.Modals.FileBrowser
 import "./dms-common"
 
 PluginSettings {
     id: root
     pluginId: "ambientSound"
+
+    property var customSounds: {
+        settingChanged;
+        return loadValue("customSounds", []);
+    }
+
+    function saveCustomSounds(newSounds) {
+        saveValue("customSounds", newSounds);
+    }
 
     readonly property var sounds: [
         { name: "rain", icon: "water_drop" },
@@ -128,13 +138,38 @@ PluginSettings {
     }
 
     SettingsCard {
-        SectionTitle { text: I18n.tr("Auto-start Sounds"); icon: "play_circle_outline" }
-        InfoText { text: I18n.tr("Select sounds to play automatically when you log in.") }
+        SectionTitle { text: I18n.tr("Auto-start Mode"); icon: "play_arrow" }
+
+        ButtonGroupSettingPlus {
+            id: autoStartMode
+            settingKey: "autoStartMode"
+            label: I18n.tr("Select Mode")
+            options: [
+                { label: I18n.tr("Preset"), value: "preset" },
+                { label: I18n.tr("Individual Sounds"), value: "individual" }
+            ]
+            defaultValue: "preset"
+        }
+
+        Separator { visible: autoStartMode.value === "preset" }
+
+        SelectionSettingPlus {
+            id: autoStartPreset
+            settingKey: "autoStartPreset"
+            label: I18n.tr("Auto-play Preset")
+            description: I18n.tr("Select preset to play automatically when you log in.")
+            options: root.presetOptions
+            defaultValue: ""
+            visible: autoStartMode.value === "preset"
+        }
+
+        Separator { visible: autoStartMode.value === "individual" }
 
         Flow {
             id: autoStartFlow
             width: parent.width
             spacing: 6
+            visible: autoStartMode.value === "individual"
 
             Repeater {
                 model: root.sounds
@@ -152,7 +187,7 @@ PluginSettings {
                         anchors.centerIn: parent
                         spacing: 6
                         DankIcon {
-                            name: modelData.icon
+                            name: modelData.icon || "music_note"
                             size: 16
                             color: isChecked ? Theme.onPrimary : Theme.surfaceVariantText
                         }
@@ -206,6 +241,109 @@ PluginSettings {
             defaultValue: true
         }
     }
+
+    SettingsCard {
+        id: customSoundsSection
+        SectionTitle {
+            text: I18n.tr("Custom Sounds")
+            icon: "music_note"
+        }
+
+        DankButton {
+            text: I18n.tr("Add Custom Sound")
+            iconName: "add"
+            backgroundColor: Theme.primary
+            width: parent.width
+            onClicked: customSoundBrowser.open()
+        }
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingS
+            visible: customSoundsRepeater.count > 0
+
+            Repeater {
+                id: customSoundsRepeater
+                model: root.customSounds
+
+                delegate: StyledRect {
+                    required property var modelData
+                    required property int index
+                    width: parent.width
+                    height: 40
+                    color: Theme.surfaceContainerHigh
+                    radius: Theme.cornerRadius
+
+                    Row {
+                        anchors.fill: parent
+                        anchors.leftMargin: Theme.spacingM
+                        anchors.rightMargin: Theme.spacingM
+                        spacing: Theme.spacingM
+
+                        DankIcon {
+                            name: "audiotrack"
+                            size: 16
+                            color: Theme.primary
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        StyledText {
+                            text: modelData.name
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 64
+                            elide: Text.ElideRight
+                        }
+
+                        DankIcon {
+                            name: "delete"
+                            size: 16
+                            color: Theme.error
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    let updated = JSON.parse(JSON.stringify(root.customSounds));
+                                    updated.splice(index, 1);
+                                    root.saveCustomSounds(updated);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    FileBrowserModal {
+        id: customSoundBrowser
+        browserTitle: I18n.tr("Select Audio File")
+        fileExtensions: ["*.ogg", "*.mp3", "*.wav", "*.m4a"]
+        onFileSelected: (filePath) => {
+            let cleanPath = filePath;
+            if (cleanPath.startsWith("file://")) {
+                cleanPath = cleanPath.substring(7);
+            }
+
+            let parts = cleanPath.split('/');
+            let fileName = parts[parts.length - 1];
+            let nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+
+            let updated = JSON.parse(JSON.stringify(root.customSounds));
+            if (!updated.some(item => item.path === cleanPath)) {
+                updated.push({ name: nameWithoutExt, path: cleanPath });
+                root.saveCustomSounds(updated);
+                ToastService.showInfo(I18n.tr("Added custom sound!"));
+            } else {
+                ToastService.showWarning(I18n.tr("Sound already exists."));
+            }
+        }
+    }
+
+
 
     SettingsCard {
         SectionTitle { 

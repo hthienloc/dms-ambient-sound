@@ -45,7 +45,7 @@ GPL-3.0
 
 - [ ] **MPRIS Integration**: Control playback and volume from system media controllers.
 - [ ] **Cross-fade Transitions**: Smoothly fade sounds in and out when switching presets or stopping.
-- [ ] **Custom Sound Support**: Ability to add personal `.ogg` or `.mp3` files to a user-defined folder.
+- [x] **Custom Sound Support**: Ability to add personal `.ogg` or `.mp3` files to a user-defined folder.
 - [ ] **Environmental Effects**: Basic filters (e.g., "Muffled/Behind Wall" effect) using mpv's audio filters.
 - [ ] **Advanced Scheduling**: Set timers or calendar-based triggers to auto-start specific soundscapes.
 - [ ] **Dynamic Soundscapes**: Sounds that vary slightly over time to prevent "loop fatigue."

@@ -277,9 +277,17 @@ PluginComponent {
         id: autoStartTimer
         interval: 2000
         onTriggered: {
-            for (var i = 0; i < root.sounds.length; i++) {
-                var key = autoStartKey(root.sounds[i].name);
-                if (pluginData[key]) root.toggleSound(root.sounds[i].name);
+            var mode = pluginData.autoStartMode || "preset";
+            if (mode === "preset") {
+                var presetName = pluginData.autoStartPreset || "";
+                if (presetName !== "") {
+                    root.togglePresetByName(presetName);
+                }
+            } else {
+                for (var i = 0; i < root.sounds.length; i++) {
+                    var key = autoStartKey(root.sounds[i].name);
+                    if (pluginData[key]) root.toggleSound(root.sounds[i].name);
+                }
             }
             if (pluginData.enableSleepTimer) {
                 var minutes = parseInt(pluginData.sleepTimerDuration) || 0;
