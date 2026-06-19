@@ -16,7 +16,7 @@ PluginComponent {
     pillRightClickAction: () => root.toggleMute()
 
     // Layout constants
-    readonly property real cellWidth: (root.popoutWidth - (root.gridSpacing * 2) - 16) / 3
+    readonly property real cellWidth: (root.popoutWidth - (root.gridSpacing * 3) - 16) / 4
     readonly property real cellHeight: 80
     readonly property real iconSize: 24
     readonly property real fontSize: 13
@@ -41,15 +41,27 @@ PluginComponent {
         { name: "waves", icon: "waves" },
         { name: "stream", icon: "water" },
         { name: "birds", icon: "flutter_dash" },
+        { name: "forest", icon: "forest" },
         { name: "summer-night", icon: "dark_mode" },
         { name: "fireplace", icon: "local_fire_department" },
         { name: "coffee-shop", icon: "local_cafe" },
         { name: "city", icon: "location_city" },
         { name: "train", icon: "train" },
         { name: "boat", icon: "sailing" },
+        { name: "acoustic-guitar", icon: "music_note" },
+        { name: "warm-piano", icon: "piano" },
+        { name: "ambient-music", icon: "library_music" },
+        { name: "lofi-beats", icon: "headphones" },
+        { name: "fan", icon: "mode_fan" },
+        { name: "airplane", icon: "flight" },
+        { name: "laundry-room", icon: "local_laundry_service" },
         { name: "white-noise", icon: "blur_on" },
-        { name: "pink-noise", icon: "blur_linear" }
+        { name: "pink-noise", icon: "blur_linear" },
+        { name: "brown-noise", icon: "blur_circular" },
+        { name: "green-noise", icon: "lens_blur" }
     ]
+
+    readonly property var visibleSounds: sounds.filter(s => (pluginData.hiddenSounds || []).indexOf(s.name) < 0)
 
     // Sleep timer presets
     readonly property var sleepPresets: [
@@ -423,12 +435,22 @@ PluginComponent {
     verticalBarPill: horizontalBarPill
 
     // Popout dimensions
-    popoutWidth: 350
+    popoutWidth: 440
     popoutHeight: {
-        let h = 330; // Base: Header + Audio + Grid + Timer + When Done
-        if (root.presets.length > 0) h += 65;
+        let gridRows = Math.ceil(root.visibleSounds.length / 4);
+        let gridHeight = gridRows * root.cellHeight + (gridRows - 1) * root.gridSpacing;
+        let baseH = 90; // Header + MediaHeader + spacing/padding
+        if (pluginData.showTimerSection ?? true) baseH += 110; // Sleep presets & When Done
+        let h = baseH + gridHeight;
+        if (root.presets.length > 0 || root.playingSounds.length > 0) {
+            h += 40; // Save preset button / header row
+            if (root.presets.length > 0) {
+                let presetRows = Math.ceil(root.presets.length / 2);
+                h += presetRows * 32 + (presetRows - 1) * 4 + 8; // Presets flow height
+            }
+        }
         if (root.showHints && root.playingSounds.length > 0) h += 50;
-        return h;
+        return Math.min(800, h);
     }
 
     // Popout content
@@ -462,13 +484,35 @@ PluginComponent {
                 Column {
                     width: parent.width
                     spacing: 4
-                    visible: root.presets.length > 0
+                    visible: root.presets.length > 0 || root.playingSounds.length > 0
 
-                    StyledText {
-                        text: I18n.tr("Your Presets")
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Font.Bold
-                        color: Theme.surfaceVariantText
+                    Item {
+                        width: parent.width
+                        height: 32
+
+                        StyledText {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: I18n.tr("Your Presets")
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.weight: Font.Bold
+                            color: Theme.surfaceVariantText
+                            visible: root.presets.length > 0
+                        }
+
+                        DankButton {
+                            id: saveButton
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: I18n.tr("Save Preset")
+                            iconName: "bookmark_add"
+                            buttonHeight: 28
+                            backgroundColor: "transparent"
+                            textColor: Theme.primary
+                            horizontalPadding: Theme.spacingM
+                            visible: root.playingSounds.length > 0
+                            onClicked: root.savePreset()
+                        }
                     }
 
                     Flow {
@@ -544,9 +588,9 @@ PluginComponent {
                     width: parent.width
                     spacing: root.gridSpacing
                     
-                    // 14 Sound Tiles
+                    // Sound Tiles
                     Repeater {
-                        model: root.sounds
+                        model: root.visibleSounds
                         delegate: ActionTile {
                             width: root.cellWidth
                             height: root.cellHeight
@@ -563,27 +607,16 @@ PluginComponent {
                             onScrollUp: {
                                 if (active) {
                                     var current = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
-                                    root.setSoundVolume(modelData.name, Math.min(100, current + 10));
+                                    root.setSoundVolume(modelData.name, Math.min(100, current + 5));
                                 }
                             }
                             onScrollDown: {
                                 if (active) {
                                     var current = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
-                                    root.setSoundVolume(modelData.name, Math.max(0, current - 10));
+                                    root.setSoundVolume(modelData.name, Math.max(0, current - 5));
                                 }
                             }
                         }
-                    }
-
-                    // 15th Slot: Save Preset Button
-                    ActionTile {
-                        width: root.cellWidth
-                        height: root.cellHeight
-                        iconName: "bookmark_add"
-                        title: "Save Preset"
-                        titleFontSize: 12
-                        textColor: Theme.primary
-                        onClicked: root.savePreset()
                     }
                 }
 
@@ -595,7 +628,7 @@ PluginComponent {
                     Row {
                         width: parent.width
                         spacing: 4
-                        visible: !sleepTimer.running
+                        visible: !sleepTimer.running && (pluginData.showTimerSection ?? true)
 
                         Repeater {
                             model: root.sleepPresets
@@ -638,6 +671,7 @@ PluginComponent {
                     Column {
                         width: parent.width
                         spacing: 4
+                        visible: pluginData.showTimerSection ?? true
 
                         StyledText {
                             text: I18n.tr("When Done:")

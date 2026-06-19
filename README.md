@@ -18,7 +18,7 @@ git clone https://github.com/hthienloc/dms-ambient-sound ~/.config/DankMaterialS
 
 ## Features
 
-- **14 built-in sounds** - Rain, storm, wind, waves, fireplace, city, etc.
+- **24 built-in sounds** - Rain, storm, wind, waves, fireplace, city, etc.
 - **Mix & match** - Play multiple sounds simultaneously
 - **Presets** - Save and load your favorite sound combinations
 - **Sleep timer** - Auto-stop with configurable actions (mute, lock, suspend)
@@ -40,6 +40,12 @@ git clone https://github.com/hthienloc/dms-ambient-sound ~/.config/DankMaterialS
 ## License
 
 GPL-3.0
+
+## Credits
+
+Sound assets and inspiration sourced from:
+- [Blankie](https://github.com/codybrom/Blankie)
+- [Blanket](https://github.com/rafaelmardojai/blanket)
 
 ## Roadmap / TODO
 

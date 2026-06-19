@@ -27,14 +27,24 @@ PluginSettings {
         { name: "waves", icon: "waves" },
         { name: "stream", icon: "water" },
         { name: "birds", icon: "flutter_dash" },
+        { name: "forest", icon: "forest" },
         { name: "summer-night", icon: "dark_mode" },
         { name: "fireplace", icon: "local_fire_department" },
         { name: "coffee-shop", icon: "local_cafe" },
         { name: "city", icon: "location_city" },
         { name: "train", icon: "train" },
         { name: "boat", icon: "sailing" },
+        { name: "acoustic-guitar", icon: "music_note" },
+        { name: "warm-piano", icon: "piano" },
+        { name: "ambient-music", icon: "library_music" },
+        { name: "lofi-beats", icon: "headphones" },
+        { name: "fan", icon: "mode_fan" },
+        { name: "airplane", icon: "flight" },
+        { name: "laundry-room", icon: "local_laundry_service" },
         { name: "white-noise", icon: "blur_on" },
-        { name: "pink-noise", icon: "blur_linear" }
+        { name: "pink-noise", icon: "blur_linear" },
+        { name: "brown-noise", icon: "blur_circular" },
+        { name: "green-noise", icon: "lens_blur" }
     ]
 
     property var autoStartStates: ({})
@@ -103,12 +113,23 @@ PluginSettings {
         SectionTitle { 
             text: I18n.tr("Sleep Timer")
             icon: "timer" 
-            showReset: enableSleepTimer.isDirty || defaultTimer.isDirty
+            showReset: enableSleepTimer.isDirty || defaultTimer.isDirty || showTimerSection.isDirty
             onResetClicked: {
                 enableSleepTimer.resetToDefault();
                 defaultTimer.resetToDefault();
+                showTimerSection.resetToDefault();
             }
         }
+
+        ToggleSettingPlus {
+            id: showTimerSection
+            settingKey: "showTimerSection"
+            label: I18n.tr("Show Timer in Popout")
+            description: I18n.tr("Display sleep timer controls in the popout menu.")
+            defaultValue: true
+        }
+
+        Separator {}
 
         ToggleSettingPlus {
             id: enableSleepTimer
@@ -342,8 +363,60 @@ PluginSettings {
             }
         }
     }
+    SettingsCard {
+        SectionTitle { text: I18n.tr("Visible Sounds"); icon: "visibility" }
 
+        Flow {
+            id: visibleSoundsFlow
+            width: parent.width
+            spacing: 6
 
+            Repeater {
+                model: root.sounds
+                delegate: Rectangle {
+                    width: (visibleSoundsFlow.width - 12) / 3
+                    height: 36
+                    radius: Theme.cornerRadius
+                    
+                    readonly property bool isVisible: (root.loadValue("hiddenSounds", [])).indexOf(modelData.name) < 0
+                    
+                    color: isVisible ? Theme.primary : Theme.surfaceContainerHigh
+                    
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        DankIcon {
+                            name: modelData.icon || "music_note"
+                            size: 16
+                            color: isVisible ? Theme.onPrimary : Theme.surfaceVariantText
+                        }
+                        StyledText {
+                            text: I18n.tr(modelData.name.replace("-", " "))
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.weight: isVisible ? Font.Bold : Font.Normal
+                            color: isVisible ? Theme.onPrimary : Theme.surfaceText
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            let list = root.loadValue("hiddenSounds", []);
+                            let idx = list.indexOf(modelData.name);
+                            let newList = list.slice();
+                            if (idx >= 0) {
+                                newList.splice(idx, 1);
+                            } else {
+                                newList.push(modelData.name);
+                            }
+                            root.saveValue("hiddenSounds", newList);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     SettingsCard {
         SectionTitle { 
