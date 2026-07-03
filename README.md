@@ -4,6 +4,11 @@ Play ambient sounds for focus and relaxation.
 
 <img src="screenshot.png" width="400" alt="Screenshot">
 
+## Requirements
+
+- `mpv` - Audio player for sound playback
+- `socat` - IPC communication with mpv
+
 ## Install
 
 Use the DMS CLI:
@@ -31,11 +36,6 @@ git clone https://github.com/hthienloc/dms-ambient-sound ~/.config/DankMaterialS
 | Left click | Open sound mixer |
 | Middle click | Toggle selected preset sound |
 | Right click | Mute/unmute |
-
-## Requirements
-
-- `mpv` - Audio player for sound playback
-- `socat` - IPC communication with mpv
 
 ## License
 
