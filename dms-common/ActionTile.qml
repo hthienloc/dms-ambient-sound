@@ -66,31 +66,100 @@ Rectangle {
             ctx.lineCap = "round";
             
             var offset = lw / 2;
-            var adjW = w - lw;
-            var adjH = h - lw;
-            var adjR = Math.max(0, r - offset);
+            var r_adj = Math.max(0, r - offset);
             
-            var perimeter = 2 * (adjW - 2 * adjR) + 2 * (adjH - 2 * adjR) + 2 * Math.PI * adjR;
+            var L1 = w / 2 - offset - r_adj;
+            var L2 = Math.PI / 2 * r_adj;
+            var L3 = h - 2 * offset - 2 * r_adj;
+            var L4 = L2;
+            var L5 = w - 2 * offset - 2 * r_adj;
+            var L6 = L2;
+            var L7 = L3;
+            var L8 = L2;
+            var L9 = L1;
+            
+            var perimeter = L1 + L2 + L3 + L4 + L5 + L6 + L7 + L8 + L9;
+            var d = perimeter * progress;
             
             ctx.beginPath();
             // Start at top center
             ctx.moveTo(w / 2, offset);
-            // Go to top right
-            ctx.lineTo(w - offset - adjR, offset);
-            ctx.arcTo(w - offset, offset, w - offset, offset + adjR, adjR);
-            // Go to bottom right
-            ctx.lineTo(w - offset, h - offset - adjR);
-            ctx.arcTo(w - offset, h - offset, w - offset - adjR, h - offset, adjR);
-            // Go to bottom left
-            ctx.lineTo(offset + adjR, h - offset);
-            ctx.arcTo(offset, h - offset, offset, h - offset - adjR, adjR);
-            // Go to top left
-            ctx.lineTo(offset, offset + adjR);
-            ctx.arcTo(offset, offset, offset + adjR, offset, adjR);
-            // Go back to top center
-            ctx.lineTo(w / 2, offset);
             
-            ctx.setLineDash([perimeter * progress, perimeter * (1 - progress)]);
+            // Segment 1: Top-right straight line
+            if (d > 0) {
+                var len = Math.min(d, L1);
+                ctx.lineTo(w / 2 + len, offset);
+                d -= len;
+            }
+            
+            // Segment 2: Top-right arc
+            if (d > 0) {
+                var len = Math.min(d, L2);
+                if (r_adj > 0) {
+                    var angle = (len / L2) * (Math.PI / 2);
+                    ctx.arc(w - offset - r_adj, offset + r_adj, r_adj, -Math.PI / 2, -Math.PI / 2 + angle);
+                }
+                d -= len;
+            }
+            
+            // Segment 3: Right straight line
+            if (d > 0) {
+                var len = Math.min(d, L3);
+                ctx.lineTo(w - offset, offset + r_adj + len);
+                d -= len;
+            }
+            
+            // Segment 4: Bottom-right arc
+            if (d > 0) {
+                var len = Math.min(d, L4);
+                if (r_adj > 0) {
+                    var angle = (len / L4) * (Math.PI / 2);
+                    ctx.arc(w - offset - r_adj, h - offset - r_adj, r_adj, 0, angle);
+                }
+                d -= len;
+            }
+            
+            // Segment 5: Bottom straight line
+            if (d > 0) {
+                var len = Math.min(d, L5);
+                ctx.lineTo(w - offset - r_adj - len, h - offset);
+                d -= len;
+            }
+            
+            // Segment 6: Bottom-left arc
+            if (d > 0) {
+                var len = Math.min(d, L6);
+                if (r_adj > 0) {
+                    var angle = (len / L6) * (Math.PI / 2);
+                    ctx.arc(offset + r_adj, h - offset - r_adj, r_adj, Math.PI / 2, Math.PI / 2 + angle);
+                }
+                d -= len;
+            }
+            
+            // Segment 7: Left straight line
+            if (d > 0) {
+                var len = Math.min(d, L7);
+                ctx.lineTo(offset, h - offset - r_adj - len);
+                d -= len;
+            }
+            
+            // Segment 8: Top-left arc
+            if (d > 0) {
+                var len = Math.min(d, L8);
+                if (r_adj > 0) {
+                    var angle = (len / L8) * (Math.PI / 2);
+                    ctx.arc(offset + r_adj, offset + r_adj, r_adj, Math.PI, Math.PI + angle);
+                }
+                d -= len;
+            }
+            
+            // Segment 9: Top-left straight line
+            if (d > 0) {
+                var len = Math.min(d, L9);
+                ctx.lineTo(offset + r_adj + len, offset);
+                d -= len;
+            }
+            
             ctx.stroke();
         }
         
