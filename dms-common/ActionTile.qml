@@ -28,14 +28,14 @@ Rectangle {
     border.width: borderWidth
     
     onVolumeProgressChanged: progressBorder.requestPaint()
+    onActiveChanged: progressBorder.requestPaint()
     
     // Active background overlay (Material Design 3 style)
     Rectangle {
         anchors.fill: parent
         radius: parent.radius
-        color: Theme.primary
-        opacity: 0.12
-        visible: root.active
+        color: root.activeColor
+        opacity: root.active ? 0.12 : 0.0
         
         Behavior on opacity { NumberAnimation { duration: 200 } }
     }
@@ -51,15 +51,17 @@ Rectangle {
             ctx.reset();
             ctx.clearRect(0, 0, width, height);
             
-            var progress = root.volumeProgress;
-            if (progress <= 0) return;
-            
             var w = width;
             var h = height;
+            if (w <= 0 || h <= 0) return;
+            
+            var progress = Math.max(0.0, Math.min(1.0, root.volumeProgress));
+            if (progress <= 0) return;
+            
             var r = root.radius;
             var lw = 2; // line width
             
-            ctx.strokeStyle = Theme.primary;
+            ctx.strokeStyle = root.activeColor;
             ctx.lineWidth = lw;
             ctx.lineCap = "round";
             
@@ -103,7 +105,7 @@ Rectangle {
         DankIcon {
             name: root.iconName
             size: 32
-            color: root.active ? Theme.primary : root.textColor
+            color: root.active ? root.activeColor : root.textColor
             anchors.horizontalCenter: parent.horizontalCenter
         }
         
@@ -111,7 +113,7 @@ Rectangle {
             text: root.title
             font.pixelSize: root.titleFontSize
             font.weight: Font.Medium
-            color: root.active ? Theme.primary : root.textColor
+            color: root.active ? root.activeColor : root.textColor
             anchors.horizontalCenter: parent.horizontalCenter
             elide: Text.ElideRight
             width: parent.parent.width - 16
@@ -121,7 +123,7 @@ Rectangle {
         StyledText {
             text: root.subtitle
             font.pixelSize: 11
-            color: root.active ? Theme.primary : root.textColor
+            color: root.active ? root.activeColor : root.textColor
             anchors.horizontalCenter: parent.horizontalCenter
             visible: text !== ""
         }

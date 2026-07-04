@@ -122,7 +122,9 @@ PluginComponent {
     }
 
     function setSoundVolume(sound, vol) {
-        soundVolumes[sound] = vol;
+        var volumes = Object.assign({}, soundVolumes);
+        volumes[sound] = vol;
+        soundVolumes = volumes;
         pluginService.savePluginData(root.pluginId, "soundVolumes", soundVolumes);
         var socket = getIpcSocket(sound);
         sendIpcCommand(socket, { "command": ["set_property", "volume", getEffectiveVolume(sound)] });
