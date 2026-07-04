@@ -597,9 +597,10 @@ PluginComponent {
                             iconName: modelData.icon
                             title: modelData.name.replace("-", " ")
                             titleFontSize: 12
-                            subtitle: {
+                            subtitle: ""
+                            volumeProgress: {
                                 var vol = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
-                                return vol < 100 ? vol + "%" : ""
+                                return vol / 100.0;
                             }
                             active: root.playingSounds.indexOf(modelData.name) >= 0
                             
