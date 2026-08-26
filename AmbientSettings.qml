@@ -102,7 +102,7 @@ PluginSettings {
             minimum: 0
             maximum: 100
             unit: "%"
-            defaultValue: 75
+            defaultValue: 100
             leftLabel: "0%"
             rightLabel: "100%"
         }
