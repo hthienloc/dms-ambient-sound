@@ -29,12 +29,43 @@ PluginComponent {
         return url.endsWith("/") ? url.substring(0, url.length - 1) : url;
     }
 
-    function getIpcSocket(sound) {
-        return "/tmp/dms-ambient-" + sound + ".sock";
+    function hashString(value) {
+        var hash = 0;
+        var text = String(value);
+        for (var i = 0; i < text.length; i++) {
+            hash = ((hash << 5) - hash) + text.charCodeAt(i);
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(36);
+    }
+
+    function soundId(sound) {
+        return sound.id || sound.name;
+    }
+
+    function getIpcSocket(soundId) {
+        var safeId = String(soundId).replace(/[^A-Za-z0-9_.-]/g, "_");
+        if (safeId.length > 48) safeId = safeId.substring(0, 32) + "-" + hashString(soundId);
+        return "/tmp/dms-ambient-" + safeId + ".sock";
+    }
+
+    function shellQuote(value) {
+        return "'" + String(value).replace(/'/g, "'\\''") + "'";
+    }
+
+    function getSound(soundId) {
+        for (var i = 0; i < sounds.length; i++) {
+            if (root.soundId(sounds[i]) === soundId || sounds[i].name === soundId) return sounds[i];
+        }
+        return { name: soundId, icon: "music_note" };
+    }
+
+    function commandId(prefix, sound) {
+        return prefix + "-" + hashString(sound);
     }
 
     // Sound definitions
-    readonly property var sounds: [
+    readonly property var bundledSounds: [
         { name: "rain", icon: "water_drop" },
         { name: "storm", icon: "thunderstorm" },
         { name: "wind", icon: "air" },
@@ -61,7 +92,15 @@ PluginComponent {
         { name: "green-noise", icon: "lens_blur" }
     ]
 
-    readonly property var visibleSounds: sounds.filter(s => (pluginData.hiddenSounds || []).indexOf(s.name) < 0)
+    readonly property var customSounds: (pluginData.customSounds || []).map(sound => ({
+        id: "custom:" + sound.path,
+        name: sound.name,
+        icon: "audiotrack",
+        path: sound.path,
+        custom: true
+    }))
+    readonly property var sounds: bundledSounds.concat(customSounds)
+    readonly property var visibleSounds: sounds.filter(s => s.custom || (pluginData.hiddenSounds || []).indexOf(s.name) < 0)
 
     // Sleep timer presets
     readonly property var sleepPresets: [
@@ -159,7 +198,7 @@ PluginComponent {
             
             // Now start playing each sound in the preset
             for (var i = 0; i < root.playingSounds.length; i++) {
-                Proc.runCommand("play-" + root.playingSounds[i], ["bash", "-c", playSoundCmd(root.playingSounds[i])], null, 0);
+                Proc.runCommand(commandId("play", root.playingSounds[i]), ["bash", "-c", playSoundCmd(root.playingSounds[i])], null, 0);
             }
         });
     }
@@ -211,14 +250,17 @@ PluginComponent {
 
     // Helper – mpv commands
     function playSoundCmd(sound) {
-        var vol = root.isMuted ? 0 : root.masterVolume;
-        var soundFile = pluginDir + "/sounds/" + sound + ".ogg";
+        var vol = getEffectiveVolume(sound);
+        var soundData = getSound(sound);
+        var soundFile = soundData.path || (pluginDir + "/sounds/" + soundData.name + ".ogg");
         var socket = getIpcSocket(sound);
-        return "mpv --no-video --no-config --loop=inf --volume=" + vol + " --input-ipc-server='" + socket + "' '" + soundFile + "' > /dev/null 2>&1";
+        return "if command -v mpv >/dev/null 2>&1; then mpv --no-video --no-config --loop=inf --volume=" + vol + " --input-ipc-server=" + shellQuote(socket) + " " + shellQuote(soundFile) + " > /dev/null 2>&1; elif command -v ffplay >/dev/null 2>&1; then ffplay -nodisp -loglevel quiet -loop 0 -volume " + vol + " " + shellQuote(soundFile) + " > /dev/null 2>&1; else dms notify 'Ambient Sound' 'Install mpv or ffplay for playback' --icon music_note; exit 1; fi";
     }
 
-    function killSoundCmd(pattern) {
-        return "pkill -f 'ambientSound/sounds/" + pattern + ".ogg'";
+    function killSoundCmd(sound) {
+        var soundData = getSound(sound);
+        var soundFile = soundData.path || (pluginDir + "/sounds/" + soundData.name + ".ogg");
+        return "pkill -f " + shellQuote(soundFile);
     }
 
     function sendIpcCommand(socket, cmdJson) {
@@ -253,21 +295,25 @@ PluginComponent {
             list.splice(idx, 1);
             playingSounds = list;
             var socket = getIpcSocket(sound);
-            Proc.runCommand("stop-" + sound, ["bash", "-c", killSoundCmd(sound) + "; rm -f " + socket], null, 0);
+            Proc.runCommand(commandId("stop", sound), ["bash", "-c", killSoundCmd(sound) + "; rm -f " + shellQuote(socket)], null, 0);
             if (list.length === 0) {
                 root.isMuted = false;
             }
         } else {
             list.push(sound);
             playingSounds = list;
-            Proc.runCommand("play-" + sound, ["bash", "-c", playSoundCmd(sound)], null, 0);
+            Proc.runCommand(commandId("play", sound), ["bash", "-c", playSoundCmd(sound)], null, 0);
         }
     }
 
     function stopAll(callback) {
         playingSounds = [];
         isMuted = false;
-        let cmd = killSoundCmd(".*") + "; rm -f /tmp/dms-ambient-*.sock";
+        let cmd = "pkill -f 'ambientSound/sounds/.*\\.ogg'";
+        for (var i = 0; i < root.customSounds.length; i++) {
+            cmd += "; pkill -f " + shellQuote(root.customSounds[i].path);
+        }
+        cmd += "; rm -f /tmp/dms-ambient-*.sock";
         Proc.runCommand("stop-all", ["bash", "-c", cmd], (o, e) => {
             if (callback) callback();
         }, 0);
@@ -594,6 +640,7 @@ PluginComponent {
                     Repeater {
                         model: root.visibleSounds
                         delegate: ActionTile {
+                            readonly property string itemId: root.soundId(modelData)
                             width: root.cellWidth
                             height: root.cellHeight
                             iconName: modelData.icon
@@ -601,22 +648,22 @@ PluginComponent {
                             titleFontSize: 12
                             subtitle: ""
                             volumeProgress: {
-                                var vol = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
+                                var vol = root.soundVolumes[itemId] !== undefined ? root.soundVolumes[itemId] : 100;
                                 return vol / 100.0;
                             }
-                            active: root.playingSounds.indexOf(modelData.name) >= 0
+                            active: root.playingSounds.indexOf(itemId) >= 0
                             
-                            onClicked: root.toggleSound(modelData.name)
+                            onClicked: root.toggleSound(itemId)
                             onScrollUp: {
                                 if (active) {
-                                    var current = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
-                                    root.setSoundVolume(modelData.name, Math.min(100, current + 5));
+                                    var current = root.soundVolumes[itemId] !== undefined ? root.soundVolumes[itemId] : 100;
+                                    root.setSoundVolume(itemId, Math.min(100, current + 5));
                                 }
                             }
                             onScrollDown: {
                                 if (active) {
-                                    var current = root.soundVolumes[modelData.name] !== undefined ? root.soundVolumes[modelData.name] : 100;
-                                    root.setSoundVolume(modelData.name, Math.max(0, current - 5));
+                                    var current = root.soundVolumes[itemId] !== undefined ? root.soundVolumes[itemId] : 100;
+                                    root.setSoundVolume(itemId, Math.max(0, current - 5));
                                 }
                             }
                         }
