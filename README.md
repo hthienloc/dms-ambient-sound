@@ -6,8 +6,8 @@ Play ambient sounds for focus and relaxation.
 
 ## Requirements
 
-- `mpv` - Audio player for sound playback
-- `socat` - IPC communication with mpv
+- `mpv` (recommended) or `ffplay` - Audio player for sound playback
+- `socat` - Runtime volume control when using mpv
 
 ## Install
 

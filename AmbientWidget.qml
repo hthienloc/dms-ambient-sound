@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import Quickshell.Io
 import qs.Common
 import qs.Services
 import qs.Widgets
@@ -30,13 +31,7 @@ PluginComponent {
     }
 
     function hashString(value) {
-        var hash = 0;
-        var text = String(value);
-        for (var i = 0; i < text.length; i++) {
-            hash = ((hash << 5) - hash) + text.charCodeAt(i);
-            hash = hash & hash;
-        }
-        return Math.abs(hash).toString(36);
+        return Qt.md5(String(value));
     }
 
     function soundId(sound) {
@@ -44,20 +39,15 @@ PluginComponent {
     }
 
     function getIpcSocket(soundId) {
-        var safeId = String(soundId).replace(/[^A-Za-z0-9_.-]/g, "_");
-        if (safeId.length > 48) safeId = safeId.substring(0, 32) + "-" + hashString(soundId);
-        return "/tmp/dms-ambient-" + safeId + ".sock";
-    }
-
-    function shellQuote(value) {
-        return "'" + String(value).replace(/'/g, "'\\''") + "'";
+        var safeId = String(soundId).replace(/[^A-Za-z0-9_.-]/g, "_").substring(0, 24);
+        return "/tmp/dms-ambient-" + safeId + "-" + hashString(soundId) + ".sock";
     }
 
     function getSound(soundId) {
         for (var i = 0; i < sounds.length; i++) {
             if (root.soundId(sounds[i]) === soundId || sounds[i].name === soundId) return sounds[i];
         }
-        return { name: soundId, icon: "music_note" };
+        return null;
     }
 
     function commandId(prefix, sound) {
@@ -151,8 +141,13 @@ PluginComponent {
 
     // Audio state
     property var playingSounds: []
+    // Sessions retain their resolved paths even if a custom sound is removed from settings.
+    property var activeSessions: ({})
+    property var stopCallbacks: []
+    property string playerBackend: ""
+    property bool playerProbeComplete: false
     property var soundVolumes: pluginData.soundVolumes || ({})
-    property int masterVolume: pluginData.defaultVolume !== undefined ? parseInt(pluginData.defaultVolume) : 75
+    property int masterVolume: pluginData.defaultVolume !== undefined ? parseInt(pluginData.defaultVolume) : 100
     property bool isMuted: false
 
     function getEffectiveVolume(sound) {
@@ -165,8 +160,8 @@ PluginComponent {
         volumes[sound] = vol;
         soundVolumes = volumes;
         pluginService.savePluginData(root.pluginId, "soundVolumes", soundVolumes);
-        var socket = getIpcSocket(sound);
-        sendIpcCommand(socket, { "command": ["set_property", "volume", getEffectiveVolume(sound)] });
+        var session = activeSessions[sound];
+        if (session) session.applyVolume(getEffectiveVolume(sound));
     }
 
     // Preset state
@@ -190,16 +185,14 @@ PluginComponent {
     }
 
     function loadPreset(preset) {
-        // First kill everything and wait for it to finish
         stopAll(() => {
             root.isMuted = false;
             root.masterVolume = preset.volume;
-            root.playingSounds = preset.sounds.slice();
-            
-            // Now start playing each sound in the preset
-            for (var i = 0; i < root.playingSounds.length; i++) {
-                Proc.runCommand(commandId("play", root.playingSounds[i]), ["bash", "-c", playSoundCmd(root.playingSounds[i])], null, 0);
+            var startedSounds = [];
+            for (var i = 0; i < preset.sounds.length; i++) {
+                if (root.startSound(preset.sounds[i])) startedSounds.push(preset.sounds[i]);
             }
+            root.playingSounds = startedSounds;
         });
     }
 
@@ -248,37 +241,88 @@ PluginComponent {
         editingIndex = -1;
     }
 
-    // Helper – mpv commands
-    function playSoundCmd(sound) {
-        var vol = getEffectiveVolume(sound);
-        var soundData = getSound(sound);
-        var soundFile = soundData.path || (pluginDir + "/sounds/" + soundData.name + ".ogg");
-        var socket = getIpcSocket(sound);
-        return "if command -v mpv >/dev/null 2>&1; then mpv --no-video --no-config --loop=inf --volume=" + vol + " --input-ipc-server=" + shellQuote(socket) + " " + shellQuote(soundFile) + " > /dev/null 2>&1; elif command -v ffplay >/dev/null 2>&1; then ffplay -nodisp -loglevel quiet -loop 0 -volume " + vol + " " + shellQuote(soundFile) + " > /dev/null 2>&1; else dms notify 'Ambient Sound' 'Install mpv or ffplay for playback' --icon music_note; exit 1; fi";
+    function soundPath(soundData) {
+        return soundData.path || (pluginDir + "/sounds/" + soundData.name + ".ogg");
     }
 
-    function killSoundCmd(sound) {
+    function startSound(sound) {
+        if (!playerProbeComplete) {
+            ToastService.showWarning("Audio player check is still running.");
+            return false;
+        }
+        if (!playerBackend) {
+            ToastService.showError("Install mpv or ffplay for playback.");
+            return false;
+        }
+        if (activeSessions[sound]) return true;
+
         var soundData = getSound(sound);
-        var soundFile = soundData.path || (pluginDir + "/sounds/" + soundData.name + ".ogg");
-        return "pkill -f " + shellQuote(soundFile);
+        if (!soundData) {
+            ToastService.showWarning("A sound in this preset is no longer available.");
+            return false;
+        }
+
+        var session = audioSessionComponent.createObject(root, {
+            sessionId: sound,
+            backend: playerBackend,
+            sourcePath: soundPath(soundData),
+            socketPath: getIpcSocket(sound),
+            effectiveVolume: getEffectiveVolume(sound)
+        });
+        if (!session) return false;
+
+        activeSessions[sound] = session;
+        session.start();
+        return true;
     }
 
-    function sendIpcCommand(socket, cmdJson) {
-        let cmd = "echo '" + JSON.stringify(cmdJson) + "' | socat - 'UNIX-CONNECT:" + socket + "'";
-        Proc.runCommand("ipc-cmd", ["bash", "-c", cmd], null, 0);
+    function stopSound(sound) {
+        var session = activeSessions[sound];
+        if (session) session.stop();
+    }
+
+    function sendIpcVolume(sound, socket, volume) {
+        var command = JSON.stringify({ "command": ["set_property", "volume", volume] });
+        Proc.runCommand(commandId("ipc", sound), [
+            "sh", "-c",
+            "printf '%s\\n' \"$1\" | socat - \"UNIX-CONNECT:$2\"",
+            "sh", command, socket
+        ], null, 0);
+    }
+
+    function handleSessionFinished(sound, session, exitCode) {
+        if (activeSessions[sound] !== session) return;
+
+        delete activeSessions[sound];
+        Proc.runCommand(commandId("cleanup", sound), ["rm", "-f", session.socketPath], null, 0);
+
+        var idx = playingSounds.indexOf(sound);
+        if (idx >= 0) {
+            var list = playingSounds.slice();
+            list.splice(idx, 1);
+            playingSounds = list;
+        }
+
+        if (!session.stopping && exitCode !== 0) {
+            ToastService.showError("Failed to play " + (getSound(sound)?.name || "sound") + ".");
+        }
+        Qt.callLater(() => session.destroy());
+        finishStopCallbacks();
+    }
+
+    function finishStopCallbacks() {
+        if (Object.keys(activeSessions).length > 0 || stopCallbacks.length === 0) return;
+        var callbacks = stopCallbacks.slice();
+        stopCallbacks = [];
+        for (var i = 0; i < callbacks.length; i++) callbacks[i]();
     }
 
     function updateAllVolumes() {
-        if (playingSounds.length === 0) return;
-        var fullCmd = "";
         for (var i = 0; i < playingSounds.length; i++) {
             var sound = playingSounds[i];
-            var vol = getEffectiveVolume(sound);
-            var cmdJson = JSON.stringify({ "command": ["set_property", "volume", vol] });
-            var socket = getIpcSocket(sound);
-            fullCmd += "echo '" + cmdJson + "' | socat - 'UNIX-CONNECT:" + socket + "'; ";
+            var session = activeSessions[sound];
+            if (session) session.applyVolume(getEffectiveVolume(sound));
         }
-        Proc.runCommand("update-volumes", ["bash", "-c", fullCmd], null, 0);
     }
 
     // Audio logic
@@ -294,29 +338,53 @@ PluginComponent {
         if (idx >= 0) {
             list.splice(idx, 1);
             playingSounds = list;
-            var socket = getIpcSocket(sound);
-            Proc.runCommand(commandId("stop", sound), ["bash", "-c", killSoundCmd(sound) + "; rm -f " + shellQuote(socket)], null, 0);
+            stopSound(sound);
             if (list.length === 0) {
                 root.isMuted = false;
             }
         } else {
-            list.push(sound);
-            playingSounds = list;
-            Proc.runCommand(commandId("play", sound), ["bash", "-c", playSoundCmd(sound)], null, 0);
+            if (startSound(sound)) {
+                list.push(sound);
+                playingSounds = list;
+            }
         }
     }
 
     function stopAll(callback) {
         playingSounds = [];
         isMuted = false;
-        let cmd = "pkill -f 'ambientSound/sounds/.*\\.ogg'";
-        for (var i = 0; i < root.customSounds.length; i++) {
-            cmd += "; pkill -f " + shellQuote(root.customSounds[i].path);
+        if (callback) stopCallbacks = stopCallbacks.concat([callback]);
+
+        var sessionIds = Object.keys(activeSessions);
+        for (var i = 0; i < sessionIds.length; i++) activeSessions[sessionIds[i]].stop();
+        finishStopCallbacks();
+    }
+
+    function destroyAllSessions() {
+        var sessionIds = Object.keys(activeSessions);
+        for (var i = 0; i < sessionIds.length; i++) activeSessions[sessionIds[i]].destroy();
+        activeSessions = {};
+    }
+
+    Process {
+        id: playerProbe
+        running: true
+        command: ["sh", "-c", "if command -v mpv >/dev/null 2>&1; then printf mpv; elif command -v ffplay >/dev/null 2>&1; then printf ffplay; fi"]
+        stdout: StdioCollector { id: playerProbeOutput }
+        stderr: StdioCollector {}
+        onExited: exitCode => {
+            root.playerBackend = exitCode === 0 ? playerProbeOutput.text.trim() : "";
+            root.playerProbeComplete = true;
         }
-        cmd += "; rm -f /tmp/dms-ambient-*.sock";
-        Proc.runCommand("stop-all", ["bash", "-c", cmd], (o, e) => {
-            if (callback) callback();
-        }, 0);
+    }
+
+    Component {
+        id: audioSessionComponent
+        AudioSession {
+            id: audioSession
+            onVolumeCommandRequested: (socketPath, volume) => root.sendIpcVolume(sessionId, socketPath, volume)
+            onFinished: exitCode => root.handleSessionFinished(sessionId, audioSession, exitCode)
+        }
     }
 
     function adjustVolume(delta) {
@@ -410,6 +478,8 @@ PluginComponent {
             }
         }
     }
+
+    Component.onDestruction: destroyAllSessions()
 
     // ── Pill (horizontal & vertical) ──
     horizontalBarPill: Component {
